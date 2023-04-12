@@ -143,7 +143,7 @@ const Modal = () => {
         <Dialog.Overlay className="fixed inset-0 bg-gray-500/75" />
         <div className="relative mx-auto max-w-full rounded-xl bg-white shadow-2xl ring-1 p-2 border-cyan-600 border-t-8">
           <div className="w-full h-[65vh] bg-cyan-50 overflow-y-auto smooth-scroll">
-            <h1> </h1>
+            <h1 className="text-4xl p-4 text-center"> Welcome to the Docs </h1>
             <div className="">
               {chatLog.map((chat, index) => {
                 return <Message key={index} chat={chat} />;
