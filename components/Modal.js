@@ -13,6 +13,12 @@ const Modal = () => {
   const [pending, setPending] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollDirection = useScrollDirection();
+  const [response, setResponse] = useState({
+    history: [],
+    question: "",
+    pending: "",
+    pendingSourceDocs: [],
+  });
 
   useEffect(() => {
     if (scrollDirection === "down") {
@@ -70,8 +76,9 @@ const Modal = () => {
   // }
 
   async function handleSubmit() {
+    // const ctrl = new AbortController();
     const chats = chatLog;
-    const prompt = search;
+    const question = search;
     setChatLog([
       ...chatLog,
       {
@@ -80,6 +87,11 @@ const Modal = () => {
       },
     ]);
     setSearch("");
+
+    const body = JSON.stringify({
+      question: prompt,
+      history: chats,
+    });
 
     try {
       let responseData = "";
@@ -94,31 +106,62 @@ const Modal = () => {
             question: prompt,
             history: chats,
           }),
+          // signal: ctrl.signal,
           onmessage: (event) => {
             if (event.data === "[DONE]") {
-              // parsing is complete, no more chunks to come
-              console.log("Parsing complete!");
-              console.log(pending);
-              setChatLog((prevChatLog) => [
-                ...prevChatLog,
-                {
-                  user: "gpt",
-                  message: pending,
-                },
-              ]);
-              setIsLoading(false);
+              setResponse((prevState) => ({
+                ...prevState,
+                history: [
+                  ...prevState.history,
+                  [question, prevState.pending ?? ""],
+                ],
+              }));
+              console.log("done");
+              console.log(response);
+              setLoading(false);
+              // ctrl.abort();
             } else {
               const data = JSON.parse(event.data);
               if (data.sourceDocs) {
-                // do something
+                setResponse((prevState) => ({
+                  ...prevState,
+                  pendingSourceDocs: data.sourceDocs,
+                }));
               } else {
-                console.log(data.data);
-                setPending((prevPending) => prevPending + data.data);
+                setResponse((prevState) => ({
+                  ...prevState,
+                  pending: (prevState.pending ?? "") + data.data,
+                }));
               }
             }
           },
         }
       );
+      // onmessage: (event) => {
+      //   if (event.data === "[DONE]") {
+      // parsing is complete, no more chunks to come
+      //     console.log("Parsing complete!");
+      //     console.log(pending);
+      //     setChatLog((prevChatLog) => [
+      //       ...prevChatLog,
+      //       {
+      //         user: "gpt",
+      //         message: pending,
+      //       },
+      //     ]);
+      //     setIsLoading(false);
+      //     setPending("");
+      //   } else {
+      //     const data = JSON.parse(event.data);
+      //     if (data.sourceDocs) {
+      // do something
+      //     } else {
+      //       console.log(data.data);
+      //       setPending((prevPending) => prevPending + data.data);
+      //       console.log(pending);
+      //     }
+      //   }
+      // },
     } catch (error) {
       console.log(error);
     }
